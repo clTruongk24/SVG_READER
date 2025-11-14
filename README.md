@@ -1,2 +1,2 @@
 UML
-<img width="4082" height="1907" alt="image" src="https://github.com/user-attachments/assets/3f176292-b58d-4934-9588-045a4c56a6a2" />
+<img width="2765" height="1573" alt="image" src="https://github.com/user-attachments/assets/eddb35b9-e1f7-4ccb-b54e-b0b703bb6535" />
