@@ -18,3 +18,19 @@ void ellipse::draw(Graphics& graphics) {
 
 	graphics.Restore(state);
 }
+
+void ellipse::setCX(float cx) {
+	this->cx = cx;
+}
+
+void ellipse::setCY(float cy){
+	this->cy = cy;
+}
+
+void ellipse::setRX(float rx) {
+	this->rx = rx;
+}
+
+void ellipse::setRY(float ry) {
+	this->ry = ry;
+}

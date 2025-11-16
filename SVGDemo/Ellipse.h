@@ -12,6 +12,12 @@ private:
 public:
 	ellipse();
 	void draw(Graphics&) override;
+
+	void setCX(float);
+	void setCY(float);
+	void setRX(float);
+	void setRY(float);
+
 };
 
 #endif // !ELLIPSE_H

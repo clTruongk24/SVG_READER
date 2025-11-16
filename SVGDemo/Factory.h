@@ -6,6 +6,8 @@
 #include "Shape.h"
 
 class factory {
+private:
+	static void ApplyCommonAttributes(shape*, const map<string, string>&);
 public:
 	static shape* createShape(const string&, const map<string, string>&);
 };

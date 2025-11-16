@@ -12,6 +12,11 @@ private:
 public:
 	rectangle();
 	void draw(Graphics&) override;
+
+	void setX(float);
+	void setY(float);
+	void setWidth(float);
+	void setHeight(float);
 };
 
 #endif // !RECTANGLE_H

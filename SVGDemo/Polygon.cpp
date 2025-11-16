@@ -1,5 +1,6 @@
 #include "Polygon.h"
 #include "Color.h"
+#include <sstream>
 
 void polygon::draw(Graphics& graphics) {
 	int size = p.size();
@@ -20,4 +21,21 @@ void polygon::draw(Graphics& graphics) {
 
 	delete[] points;
 	graphics.Restore(state);
+}
+
+void polygon::setPoints(const string& pointStr) {
+	stringstream ss(pointStr);
+	string token;
+
+	while (ss >> token) {
+		stringstream pair(token);
+		string xStr, yStr;
+
+		if (getline(pair, xStr, ',') && getline(pair, yStr)) {
+			INT x = static_cast<INT>(stof(xStr));
+			INT y = static_cast<INT>(stof(yStr));
+			Point temp(x, y);
+			p.push_back(temp);
+		}
+	}
 }

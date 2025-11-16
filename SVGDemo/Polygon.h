@@ -9,5 +9,7 @@ private:
 	vector<Point> p;
 public:
 	void draw(Graphics&) override;
+
+	void setPoints(const string&);
 };
 #endif // !POLYGON_H

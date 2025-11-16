@@ -12,5 +12,10 @@ private:
 public:
 	line();
 	void draw(Graphics&) override;
+
+	void setX1(float);
+	void setY1(float);
+	void setX2(float);
+	void setY2(float);
 };
 #endif // !LINE_H

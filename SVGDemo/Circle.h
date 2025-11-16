@@ -10,8 +10,12 @@ private:
 	float r;
 public:
 	circle();
-	circle(const map<string, string>&);
+	//circle(const map<string, string>&);
 	void draw(Graphics&) override;
+
+	void setCX(float);
+	void setCY(float);
+	void setRadius(float);
 };
 
 #endif // !CIRCLE_H

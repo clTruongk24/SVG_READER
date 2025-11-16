@@ -18,3 +18,19 @@ void rectangle::draw(Graphics& graphics) {
 
 	graphics.Restore(state);
 }
+
+void rectangle::setX(float x) {
+	this->x = x;
+}
+
+void rectangle::setY(float y) {
+	this->y = y;
+}
+
+void rectangle::setWidth(float width) {
+	this->width = width;
+}
+
+void rectangle::setHeight(float height) {
+	this->height = height;
+}

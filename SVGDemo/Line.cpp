@@ -14,3 +14,16 @@ void line::draw(Graphics& graphics) {
 
 	graphics.Restore(state);
 }
+
+void line::setX1(float x1) {
+	this->x1 = x1;
+}
+void line::setY1(float y1) {
+	this->y1 = y1;
+}
+void line::setX2(float x2) {
+	this->x2 = x2;
+}
+void line::setY2(float y2) {
+	this->y2 = y2;
+}

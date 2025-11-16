@@ -23,6 +23,13 @@ protected:
 public:
 	shape();
 	virtual void draw(Graphics&) = 0;
+
+	void setID(const string&);
+	void setStrokeColor(const string&);
+	void setFillColor(const string&);
+	void setStrokeOpacity(const string&);
+	void setFillOpacity(const string&);
+	void setStrokeWidth(const string&);
 };
 
 #endif //SHAPE_H

@@ -9,9 +9,11 @@
 using namespace rapidxml;
 
 class SVGParser {
+private:
+	void parseNode(xml_node<>*, vector<shape*>&);
 public:
-	vector<shape*> parseFile(xml_node<>*);
-	shape* parseNode(xml_node<>*);
+	vector<shape*> parseFile(const string&);
+	shape* parseElement(const string&, const map<string, string>&);
 };
 
 #endif // !SVGREADER_H
