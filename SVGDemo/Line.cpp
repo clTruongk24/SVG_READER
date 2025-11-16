@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Line.h"
 #include "Color.h"
 

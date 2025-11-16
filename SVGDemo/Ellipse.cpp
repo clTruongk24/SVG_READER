@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Ellipse.h"
 #include "Color.h"
 

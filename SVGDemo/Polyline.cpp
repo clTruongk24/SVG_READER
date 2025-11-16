@@ -1,9 +1,12 @@
+#include "stdafx.h"
 #include "Polyline.h"
 #include "Color.h"
 #include <sstream>
 
 
 void polyline::draw(Graphics& graphics) {
+	if (p.size() < 2) return;
+
 	int size = p.size();
 	Point* points = new Point[size];
 	for (int i = 0; i < size; i++) {

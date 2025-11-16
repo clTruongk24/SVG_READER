@@ -1,8 +1,11 @@
+#include "stdafx.h"
 #include "Polygon.h"
 #include "Color.h"
 #include <sstream>
 
 void polygon::draw(Graphics& graphics) {
+	if (p.size() < 3) return;
+
 	int size = p.size();
 	Point* points = new Point[size];
 	for (int i = 0; i < size; i++) {

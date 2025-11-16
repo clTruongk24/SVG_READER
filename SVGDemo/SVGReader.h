@@ -9,12 +9,15 @@ class SVGReader {
 private:
 	string filePath;
 	vector<shape*> m_shapes;
-	Renderer m_render;
+	Renderer* m_render;
 	SVGParser m_parser;
 public:
 	SVGReader(const string&);
 
 	virtual ~SVGReader();
+	void parse();
+	void render(Graphics&);
+
 
 };
 

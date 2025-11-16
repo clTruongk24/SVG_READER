@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "SVGParser.h"
 #include "Factory.h"
 #include <fstream>

@@ -61,7 +61,7 @@ shape* factory::createShape(const string& tag, const map<string, string>& attrs)
 	return s;
 }
 
-static void ApplyCommonAttributes(shape* s, const map<string, string>& attrs) {
+void factory::ApplyCommonAttributes(shape* s, const map<string, string>& attrs) {
 	if (attrs.count("id")) {
 		s->setID(attrs.at("id"));
 	}
@@ -75,7 +75,7 @@ static void ApplyCommonAttributes(shape* s, const map<string, string>& attrs) {
 	}
 
 	if (attrs.count("stroke-opacity")) {
-		s->setStrokeOpacity(attrs.at("stroke-opacity");
+		s->setStrokeOpacity(attrs.at("stroke-opacity"));
 	}
 
 	if (attrs.count("fill-opacity")) {
@@ -84,5 +84,11 @@ static void ApplyCommonAttributes(shape* s, const map<string, string>& attrs) {
 
 	if (attrs.count("stroke-width")) {
 		s->setStrokeWidth(attrs.at("stroke-width"));
+	}
+
+	if (attrs.count("opacity")) {
+		string opacity = attrs.at("opacity");
+		s->setFillOpacity(opacity);
+		s->setStrokeOpacity(opacity);
 	}
 }
