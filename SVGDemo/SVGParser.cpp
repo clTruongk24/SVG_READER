@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SVGParser.h"
 #include "Factory.h"
+#include "Text.h"
 #include <fstream>
 
 vector<shape*> SVGParser::parseFile(const string&) {
@@ -38,8 +39,22 @@ void SVGParser::parseNode(xml_node<>* node, vector<shape*>& Shapes) {
 			attrs[attr->name()] = attr->value();
 		}
 
+		if (tag == "text") {
+			string textContent = "";
+			if (child->value()) {
+				textContent = child->value();
+			}
+			attrs["text-content"] = textContent;
+		}
+
 		shape* s = parseElement(tag, attrs);
 		if (s) {
+			if (tag == "text") {
+				text* textShape = dynamic_cast<text*>(s);
+				if (textShape && attrs.count("text-content")) {
+					textShape->setText(attrs["text-content"]);
+				}
+			}
 			Shapes.push_back(s);
 		}
 

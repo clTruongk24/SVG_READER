@@ -6,6 +6,7 @@
 #include "Line.h"
 #include "Polygon.h"
 #include "Polyline.h"
+#include "Text.h"
 
 shape* factory::createShape(const string& tag, const map<string, string>& attrs) {
 	shape* s = nullptr;
@@ -51,6 +52,20 @@ shape* factory::createShape(const string& tag, const map<string, string>& attrs)
 	else if (tag == "polyline") {
 		polyline* temp = new polyline();
 		temp->setPoints(attrs.at("points"));
+		s = temp;
+	}
+	else if (tag == "text") {
+		text* temp = new text();
+		temp->setX(stof(attrs.at("x")));
+		temp->setY(stof(attrs.at("y")));
+		if (attrs.count("font-size")) temp->setFontSize(stof(attrs.at("font-size")));
+		if (attrs.count("font-family")) temp->setFontFamily(attrs.at("font-family"));
+		if (attrs.count("text-anchor")) temp->setTextAnchor(attrs.at("text-anchor"));
+		if (attrs.count("font-style") && attrs.at("font-style") == "italic") {
+			temp->setItalic(true);
+		}
+		if (attrs.count("dx")) temp->setDX(stof(attrs.at("dx")));
+		if (attrs.count("dy")) temp->setDY(stof(attrs.at("dy")));
 		s = temp;
 	}
 

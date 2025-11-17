@@ -165,6 +165,7 @@
     <ClInclude Include="SVGParser.h" />
     <ClInclude Include="SVGReader.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Text.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Circle.cpp" />
@@ -186,6 +187,7 @@
     <ClCompile Include="SVGDemo.cpp" />
     <ClCompile Include="SVGParser.cpp" />
     <ClCompile Include="SVGReader.cpp" />
+    <ClCompile Include="Text.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SVGDemo.rc" />
