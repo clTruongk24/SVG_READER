@@ -6,6 +6,7 @@
 #include <fstream>        
 #include <sstream>         
 #include <iostream>
+#include "Text.h"
 
 using namespace std;
 using namespace rapidxml;
@@ -61,9 +62,23 @@ vector<shape*> SVGParser::ParseFile(const string& filePath) {
                 attributes["content"] = node->value();
             }
 
+            if (tagName == "text") {
+                string textContent = "";
+                if (node->value()) {
+                    textContent = node->value();
+                }
+                attributes["text-content"] = textContent;
+            }
+
             shape* s = ParseElement(tagName, attributes);
 
             if (s != nullptr) {
+                if (tagName == "text") {
+                    text* textShape = dynamic_cast<text*>(s);
+                    if (textShape && attributes.count("text-content")) {
+                        textShape->setText(attributes["text-content"]);
+                    }
+                }
                 Shapes.push_back(s);
             }
         }
