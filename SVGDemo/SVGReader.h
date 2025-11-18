@@ -1,29 +1,27 @@
 #ifndef SVGREADER_H
 #define SVGREADER_H
 
-#include "Shape.h"
 #include "SVGParser.h"
 #include "Renderer.h"
+#include "Shape.h"
+#include <string>
+#include <vector>
 
 class SVGReader {
 private:
-	string filePath;
-	vector<shape*> m_shapes;
-	Renderer* m_render;
-	SVGParser m_parser;
+    std::string m_filePath;
+    std::vector<shape*> m_shapes;
+    Renderer* m_renderer;
+    SVGParser* m_parser;
+    
 public:
-	SVGReader(const string&);
-	SVGReader(const string&, Graphics&);
-
-	virtual ~SVGReader();
-	
-	void Parse();
-	void Render();
-
-	void setGraphics(Graphics&);
-	std::vector<shape*> GetShapes();
+    SVGReader(const string&);
+    SVGReader(const string&, Graphics&);
+    virtual ~SVGReader();
+    bool Load(const std::string& file);
+    void Parse();
+    void Render();
+    void Render(Graphics&);
+    std::vector<shape*> GetShapes() const;
 };
-
-#endif // !SVGREADER_H
-
-
+#endif

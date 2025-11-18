@@ -1,4 +1,5 @@
-#pragma 
+#ifndef RENDERER_H
+#define RENDERER_H
 #include <vector>
 #include "Shape.h"
 
@@ -16,4 +17,6 @@ public:
 
 	//void SetTransform(const Transform& transform, Graphics* g);
 };
+
+#endif //! RENDERER_H
 
