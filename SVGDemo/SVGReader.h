@@ -12,7 +12,7 @@ private:
     std::string m_filePath;
     std::vector<shape*> m_shapes;
     Renderer* m_renderer;
-    SVGParser* m_parser;
+    SVGParser m_parser;
     
 public:
     SVGReader(const string&);

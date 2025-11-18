@@ -47,16 +47,16 @@ bool SVGReader::Load(const std::string& file) {
 
 // Parse file SVG 
 void SVGReader::Parse() {
-    if (!m_parser) {
+    /*if (!m_parser) {
         std::cerr << "SVGParser chưa được khởi tạo." << std::endl;
         return;
-    }
+    }*/
 
     for (auto shape : m_shapes) {
         delete shape;
     }
     m_shapes.clear();
-    m_shapes = m_parser->ParseFile(m_filePath);
+    m_shapes = m_parser.ParseFile(m_filePath);
 }
 
 // Render các shape sử dụng Renderer
@@ -66,9 +66,8 @@ void SVGReader::Render() {
         return;
     }
 
-    for (auto shape : m_shapes) {
-        m_renderer->Draw(shape);
-    }
+    m_renderer->Draw(m_shapes);
+    
 }
 
 void SVGReader::Render(Graphics& graphics) {
