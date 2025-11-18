@@ -5,11 +5,15 @@
 
 class Renderer
 {
+private:
+	Graphics& graphics;
 public:
-	void Draw(const std::vector<Shape*>& shapes, Graphics* g);
+	Renderer(Graphics&);
 
-	void Draw(const Shape& shape, Graphics* g);
+	void Draw(const std::vector<shape*>& shapes);
 
-	void SetTransform(const Transform& transform, Graphics* g);
+	void Draw(shape* shape);
+
+	//void SetTransform(const Transform& transform, Graphics* g);
 };
 

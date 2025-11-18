@@ -1,6 +1,6 @@
 #include "stdafx.h"          
 #include "SVGParser.h"
-#include "ShapeFactory.h"    // To call CreateShape from ShapeFactory
+#include "Factory.h"    // To call CreateShape from ShapeFactory
 #include "Shape.h"           // To use Shape*
 #include "rapidxml.hpp"      // Parse XML library
 #include <fstream>        
@@ -13,12 +13,12 @@ using namespace rapidxml;
 SVGParser::SVGParser() {}
 SVGParser::~SVGParser() {}
 
-vector<Shape*> SVGParser::ParseFile(string path) {
-    vector<Shape*> shapes;
+vector<shape*> SVGParser::ParseFile(const string& filePath) {
+    vector<shape*> Shapes;
 
-    ifstream file(path);
+    ifstream file(filePath);
     if (!file.is_open()) {
-        return shapes; 
+        return Shapes;
     }
 
     stringstream buffer;
@@ -26,19 +26,19 @@ vector<Shape*> SVGParser::ParseFile(string path) {
     string content = buffer.str();
     file.close();
 
-    if (content.empty()) return shapes;
+    if (content.empty()) return Shapes;
 
     vector<char> xmlCopy(content.begin(), content.end());
     xmlCopy.push_back('\0'); 
 
-    try {
+    
 
         xml_document<> doc;
         doc.parse<0>(&xmlCopy[0]);
 
 
         xml_node<>* root = doc.first_node("svg");
-        if (!root) return shapes;
+        if (!root) return Shapes;
 
         for (xml_node<>* node = root->first_node(); node; node = node->next_sibling()) {
 
@@ -61,20 +61,20 @@ vector<Shape*> SVGParser::ParseFile(string path) {
                 attributes["content"] = node->value();
             }
 
-            Shape* shape = ParseElement(tagName, attributes);
+            shape* s = ParseElement(tagName, attributes);
 
-            if (shape != nullptr) {
-                shapes.push_back(shape);
+            if (s != nullptr) {
+                Shapes.push_back(s);
             }
         }
-    }
-    return shapes;
+    
+    return Shapes;
 }
 
-Shape* SVGParser::ParseElement(string tag, map<string, string> attrs) {
+shape* SVGParser::ParseElement(const string& tag, const map<string, string>& attrs) {
     if (tag.empty()) {
         return nullptr;
     }
 
-    return ShapeFactory::CreateShape(tag, attrs);
+    return factory::createShape(tag, attrs);
 }

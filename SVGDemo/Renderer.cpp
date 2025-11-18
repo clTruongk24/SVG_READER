@@ -1,19 +1,23 @@
-﻿
+﻿#include "stdafx.h"
 #include "Renderer.h"
+#include "Shape.h"
 
-void Draw(const std::vector<Shape*>& shapes, Graphics* g)
+Renderer::Renderer(Graphics& g) : graphics(g) {}
+
+void Renderer::Draw(const std::vector<shape*>& shapes)
 {
     for (auto shape : shapes) {
-        if (!shape) continue;
-        Draw(*shape, g);
+        if (shape) Draw(shape);
     }
 }
 
-void Draw(const Shape& shape, Graphics* g)
+void Renderer::Draw(shape* s)
 {
-    if (!g) return;
+    if (!s) return;
+    
+    s->draw(graphics);
 
-    Pen pen(shape.stroke_color, shape.stroke_width);
+    /*Pen pen(shape.stroke_color, shape.stroke_width);
     SolidBrush brush(shape.fill_color);
 
     Matrix mtx;
@@ -23,13 +27,13 @@ void Draw(const Shape& shape, Graphics* g)
     ///...
     ///
     Matrix identity;
-    g->SetTransform(&identity);
+    g->SetTransform(&identity);*/
 }
 
-void SetTransform(const Transform& transform, Graphics* g)
-{
-    if (!g) return;
-    Matrix mtx;
-    transform.apply(mtx);
-    g->SetTransform(&mtx);
-}
+//void SetTransform(const Transform& transform, Graphics* g)
+//{
+//    if (!g) return;
+//    Matrix mtx;
+//    transform.apply(mtx);
+//    g->SetTransform(&mtx);
+//}
