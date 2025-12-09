@@ -7,6 +7,7 @@
 #include "Polygon.h"
 #include "Polyline.h"
 #include "Text.h"
+#include "Path.h"
 
 shape* factory::createShape(const string& tag, const map<string, string>& attrs) {
 	shape* s = nullptr;
@@ -67,8 +68,18 @@ shape* factory::createShape(const string& tag, const map<string, string>& attrs)
 		if (attrs.count("dx")) temp->setDX(stof(attrs.at("dx")));
 		if (attrs.count("dy")) temp->setDY(stof(attrs.at("dy")));
 		s = temp;
-	}
 
+
+	}
+	else if (tag == "path") {   
+		path* temp = new path();
+
+		if (attrs.count("d")) {
+			temp->setD(attrs.at("d"));
+		}
+
+		s = temp; 
+	}
 	if (s) {
 		ApplyCommonAttributes(s, attrs);
 	}
