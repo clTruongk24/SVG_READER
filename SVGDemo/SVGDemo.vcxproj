@@ -153,6 +153,7 @@
     <ClInclude Include="Factory.h" />
     <ClInclude Include="Gradient.h" />
     <ClInclude Include="Line.h" />
+    <ClInclude Include="Path.h" />
     <ClInclude Include="Polygon.h" />
     <ClInclude Include="Polyline.h" />
     <ClInclude Include="rapidxml.hpp" />
@@ -173,6 +174,7 @@
     <ClCompile Include="Ellipse.cpp" />
     <ClCompile Include="Factory.cpp" />
     <ClCompile Include="Line.cpp" />
+    <ClCompile Include="Path.cpp" />
     <ClCompile Include="Polygon.cpp" />
     <ClCompile Include="Polyline.cpp" />
     <ClCompile Include="Rectangle.cpp" />
