@@ -17,6 +17,10 @@ void text::draw(Graphics& graphics) {
 
 	GraphicsState state = graphics.Save();
 
+	if (transform) {
+		transform->Apply(graphics);
+	}
+
 	SolidBrush brush(ColorWithOpacity(fill_color, fill_opacity));
 	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
 
@@ -58,6 +62,10 @@ void text::draw(Graphics& graphics) {
 	}
 
 	graphics.Restore(state);
+}
+
+float text::getFontSize() const {
+	return font_size;
 }
 
 void text::setX(float x) {

@@ -9,6 +9,10 @@ rectangle::rectangle() {
 void rectangle::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
+	if (transform) {
+		transform->Apply(graphics);
+	}
+
 	SolidBrush brush(ColorWithOpacity(fill_color, fill_opacity));
 	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
 

@@ -1,5 +1,8 @@
-#pragma once
+#ifndef TRANSFORM_H
+#define TRANSFORM_H
 #include <gdiplus.h>
+#include <string>
+#include <vector>
 
 class Transform
 {
@@ -10,16 +13,21 @@ private:
     float translateX;
     float translateY;
 
+	Gdiplus::Matrix* matrix;
+    bool useMatrix;
+
 public:
     Transform(float sx = 1.0f, float sy = 1.0f,
               float rot = 0.0f,
               float tx = 0.0f, float ty = 0.0f);
 
+    virtual ~Transform();
+
     // Áp dụng transform lên Graphics
     void Apply(Gdiplus::Graphics& g) const;
 
     // Hỗ trợ
-    Gdiplus::Matrix ToMatrix() const;
+    //Gdiplus::Matrix ToMatrix() const;
 
     // Getter
     float getScaleX() const { return scaleX; }
@@ -27,4 +35,19 @@ public:
     float getRotation() const { return rotation; }
     float getTranslateX() const { return translateX; }
     float getTranslateY() const { return translateY; }
+
+    void setScaleX(float);
+	void setScaleY(float);
+	void setRotation(float);
+	void setRotation(float, float, float);
+	void setTranslateX(float);
+    void setTranslateY(float);
+	void setMatrix(float, float, float, float, float, float);
+
+
+	static Transform* parse(const std::string&);
 };
+
+std::vector<std::string> split(const std::string&);
+
+#endif // !TRANSFORM_H

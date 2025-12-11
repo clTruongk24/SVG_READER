@@ -152,6 +152,7 @@
     <ClInclude Include="Ellipse.h" />
     <ClInclude Include="Factory.h" />
     <ClInclude Include="Gradient.h" />
+    <ClInclude Include="Group.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="Polygon.h" />
@@ -167,12 +168,14 @@
     <ClInclude Include="SVGReader.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Text.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Circle.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="Ellipse.cpp" />
     <ClCompile Include="Factory.cpp" />
+    <ClCompile Include="Group.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="Polygon.cpp" />
@@ -190,6 +193,7 @@
     <ClCompile Include="SVGParser.cpp" />
     <ClCompile Include="SVGReader.cpp" />
     <ClCompile Include="Text.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SVGDemo.rc" />

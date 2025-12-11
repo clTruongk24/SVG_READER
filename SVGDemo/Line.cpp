@@ -9,6 +9,10 @@ line::line() {
 void line::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
+	if (transform) {
+		transform->Apply(graphics);
+	}
+
 	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
 
 	graphics.DrawLine(&pen, x1, y1, x2, y2);

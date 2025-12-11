@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Path.h"
+#include "Color.h"
 #include <sstream>
 #include <algorithm> 
 
@@ -21,6 +22,8 @@ void path::setD(const string& d) {
 }
 
 void path::draw(Graphics& graphics) {
+	GraphicsState state = graphics.Save();
+
     Pen pen(stroke_color, stroke_width);
 
     if (stroke_opacity < 1.0f) {
@@ -36,6 +39,8 @@ void path::draw(Graphics& graphics) {
         brush.SetColor(Color(static_cast<BYTE>(fill_opacity * 255), c.GetR(), c.GetG(), c.GetB()));
         graphics.FillPath(&brush, gPath);
     }
+
+	graphics.Restore(state);
 }
 
 // -------------------------------------------------------------------------
