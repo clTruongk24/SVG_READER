@@ -7,35 +7,6 @@ circle::circle() {
 	cx = cy = r = 0;
 }
 
-//circle::circle(const map<string, string>& attrs) {
-//	cx = stof(attrs.at("cx"));
-//	cy = stof(attrs.at("cy"));
-//	r = stof(attrs.at("r"));
-//
-//	if (attrs.find("fill") != attrs.end()) {
-//		fill_color = parseColor(attrs.at("fill"));
-//	}
-//
-//	if (attrs.find("stroke") != attrs.end()) {
-//		stroke_color = parseColor(attrs.at("stroke"));
-//		if (stroke_width == 0) {
-//			stroke_width = 1;
-//		}
-//	}
-//
-//	if (attrs.find("stroke-width") != attrs.end()) {
-//		stroke_width = stof(attrs.at("stroke-witdh"));
-//	}
-//
-//	if (attrs.find("fill-opacity") != attrs.end()) {
-//		fill_opacity = stof(attrs.at("fill-opacity"));
-//	}
-//
-//	if (attrs.find("stroke-opacity") != attrs.end()) {
-//		stroke_opacity = stof(attrs.at("stroke-opacity"));
-//	}
-//}
-
 void circle::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
