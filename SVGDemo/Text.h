@@ -21,7 +21,7 @@ public:
 	void setX(float);
 	void setY(float);
 	void setFontSize(float);
-	float getFontSize() const;  // Added getter
+	float getFontSize() const; 
 	void setText(const string&);
 	void setFontFamily(const string&);
 	void setTextAnchor(const string&);
