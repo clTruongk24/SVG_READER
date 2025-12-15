@@ -111,12 +111,6 @@ void factory::ApplyCommonAttributes(shape* s, const map<string, string>& attrs) 
 	}
 
 	if (attrs.count("fill")) {
-		string fill = attrs.at("fill");
-		if (fill == "none") {
-			s->setFillColor("white");
-			s->setFillOpacity("0");
-		}
-		else
 		s->setFillColor(attrs.at("fill"));
 	}
 

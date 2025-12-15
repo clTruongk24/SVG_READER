@@ -11,4 +11,8 @@ using namespace Gdiplus;
 Color parseColor(const string&);
 Color ColorWithOpacity(const Color&, float);
 
+Color parseRGBColor(const string&);
+Color parseHexColor(const string&);
+Color parseNamedColor(const string&);
+
 #endif // !COLOR_H

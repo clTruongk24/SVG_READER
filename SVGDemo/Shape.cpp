@@ -28,6 +28,10 @@ void shape::setStrokeColor(const string& strokeStr) {
 	stroke_color = parseColor(strokeStr);
 }
 void shape::setFillColor(const string& fillStr) {
+	if (fillStr == "none") {
+		fill_color = Color(0, 0, 0, 0); // Transparent
+		return;
+	}
 	fill_color = parseColor(fillStr);
 }
 void shape::setStrokeOpacity(const string& strokeStr) {

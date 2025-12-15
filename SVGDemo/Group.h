@@ -23,7 +23,7 @@ public:
 	void setGroupAttributes(const std::map<std::string, std::string>&);
 
 
-	std::map<std::string, std::string> getGroupAtrributes() const;
+	std::map<std::string, std::string> getGroupAttributes() const;
 };
 
 #endif // !GROUP_H
