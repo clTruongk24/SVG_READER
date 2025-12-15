@@ -10,14 +10,20 @@ class group : public shape {
 private:
 	std::vector<shape*> children;
 
-	static void ApplyCommonAttributes(shape*, const std::map<std::string, std::string>&);
+	std::map<string, string> groupAttributes;
+
+	void ApplyInheritAttribute(shape*);
 public:
 	group();
 	virtual ~group();
+
 	void draw(Graphics&) override;
 	void addChild(shape*);
 
-	void ApplyAttributes(const std::map<std::string, std::string>&);
+	void setGroupAttributes(const std::map<std::string, std::string>&);
+
+
+	std::map<std::string, std::string> getGroupAtrributes() const;
 };
 
 #endif // !GROUP_H
