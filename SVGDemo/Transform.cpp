@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Transform.h"
+#include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -16,16 +18,6 @@ Transform::~Transform() {
 
 void Transform::Apply(Gdiplus::Graphics& g) const
 {
-    /* g.ResetTransform();
-
-     Gdiplus::Matrix m;
-
-     m.Scale(scaleX, scaleY, Gdiplus::MatrixOrderAppend);
-     m.Rotate(rotation, Gdiplus::MatrixOrderAppend);
-     m.Translate(translateX, translateY, Gdiplus::MatrixOrderAppend);
-
-     g.MultiplyTransform(&m, Gdiplus::MatrixOrderAppend);*/
-
     if (useMatrix && matrix) {
         g.MultiplyTransform(matrix);
     }
@@ -46,17 +38,6 @@ void Transform::Apply(Gdiplus::Graphics& g) const
         }
     }
 }
-
-//Gdiplus::Matrix Transform::ToMatrix() const
-//{
-//    Gdiplus::Matrix m;
-//    m.Scale(scaleX, scaleY, Gdiplus::MatrixOrderAppend);
-//    m.Rotate(rotation, Gdiplus::MatrixOrderAppend);
-//    m.Translate(translateX, translateY, Gdiplus::MatrixOrderAppend);
-//    // Do NOT return a copy of m (which would invoke the copy constructor).
-//    // Instead, return m by value (which uses the public default constructor and assignment).
-//    return &m;
-//}
 
 void Transform::setScaleX(float sx) {
     this->scaleX = sx;
@@ -97,51 +78,88 @@ void Transform::setMatrix(float m11, float m12, float m21, float m22, float dx, 
     useMatrix = true;
 }
 
-Transform* Transform::parse(const std::string& str) {
-    if (str.empty()) return nullptr;
+Transform* Transform::parse(const std::string& transformStr) {
+    if (transformStr.empty()) {
+        return nullptr;
+	}
 
-	Transform* transform = new Transform();
+    Transform* transform = new Transform();
 
-	vector<string> tokens = split(str);
+	vector<string> tokens = split(transformStr);
 
-    for (const string& token : tokens) {
-        if (token.find("scale") == 0) {
-            float sx = 1.0f, sy = 1.0f;
-            sscanf_s(token.c_str(), "scale(%f %f)", &sx, &sy);
-            transform->setScaleX(sx);
-            transform->setScaleY(sy);
-        }
-        else if (token.find("rotate") == 0) {
-            float angle = 0.0f;
-            sscanf_s(token.c_str(), "rotate(%f)", &angle);
-            transform->setRotation(angle);
-        }
-        else if (token.find("translate") == 0) {
-            float tx = 0.0f, ty = 0.0f;
-            sscanf_s(token.c_str(), "translate(%f %f)", &tx, &ty);
-            transform->setTranslateX(tx);
-            transform->setTranslateY(ty);
-        }
-        else if (token.find("matrix") == 0) {
-            float m11, m12, m21, m22, dx, dy;
-            sscanf_s(token.c_str(), "matrix(%f %f %f %f %f %f)", &m11, &m12, &m21, &m22, &dx, &dy);
-            transform->setMatrix(m11, m12, m21, m22, dx, dy);
-		}
+    for (auto& token : tokens) {
+		int start = token.find('(');
+		int end = token.find(')');
+        if (start == string::npos || end == string::npos || end <= start) continue;
+		string cmd = token.substr(0, start);
+		string paramsStr = token.substr(start + 1, end - start - 1);
+
+		vector<float> params = parseParams(paramsStr);
+
+		transform->switchTransform(cmd, params);
+    } 
+
+    return transform;
+}
+
+void Transform::switchTransform(const string& cmd, const vector<float>& params) {
+    if (cmd == "translate" && (params.size() == 1 || params.size() == 2)) {
+        float tx = params[0];
+        float ty = (params.size() == 2) ? params[1] : 0.0f;
+        setTranslateX(tx);
+        setTranslateY(ty);
     }
+    else if (cmd == "scale" && (params.size() == 1 || params.size() == 2)) {
+        float sx = params[0];
+        float sy = (params.size() == 2) ? params[1] : sx;
+        setScaleX(sx);
+        setScaleY(sy);
+    }
+    else if (cmd == "rotate" && (params.size() == 1 || params.size() == 3)) {
+        float angle = params[0];
+        if (params.size() == 3) {
+            float cx = params[1];
+            float cy = params[2];
+            setRotation(angle, cx, cy);
+        }
+        else {
+            setRotation(angle);
+        }
+    }
+    else if (cmd == "matrix" && params.size() == 6) {
+        setMatrix(params[0], params[1], params[2], params[3], params[4], params[5]);
+    }
+}
 
-	return transform;
+vector<float> parseParams(const string& paramsStr) {
+    vector<float> params;
+    istringstream ss(paramsStr);
+    string param;
+    while (ss >> param) {
+        params.push_back(stof(param));
+    }
+    return params;
 }
 
 vector<string> split(const string& str) {
     vector<string> tokens;
-    size_t start = 0;
-	size_t end = str.find(')');
-    while (end != string::npos) {
-        string token = str.substr(start, end - start + 1);
-        tokens.push_back(token);
-        start = end + 2;
-        end = str.find(')', start);
-	}
-   
-	return tokens;
+
+    int i = 0;
+    while (i < str.length()) {
+        
+		i = str.find_first_not_of(" \t\n", i);
+        if (i == string::npos) break;
+        
+		int j = str.find_first_of(" (", i);
+		if (j == string::npos) break;
+
+		int k = str.find_first_of(")", j);
+		if (k == string::npos) break;
+
+		string cmd = str.substr(i, k - i + 1);
+		replace(cmd.begin(), cmd.end(), ',', ' ');
+		tokens.push_back(cmd);
+		i = k + 1;
+    }
+    return tokens;
 }

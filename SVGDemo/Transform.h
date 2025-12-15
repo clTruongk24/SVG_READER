@@ -44,10 +44,12 @@ public:
     void setTranslateY(float);
 	void setMatrix(float, float, float, float, float, float);
 
+    void switchTransform(const std::string&, const std::vector<float>&);
 
 	static Transform* parse(const std::string&);
 };
 
 std::vector<std::string> split(const std::string&);
+std::vector<float> parseParams(const std::string&);
 
 #endif // !TRANSFORM_H
