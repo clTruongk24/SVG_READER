@@ -96,6 +96,7 @@ shape* factory::createShape(const string& tag, const map<string, string>& attrs)
 	}
 	if (s) {
 		ApplyCommonAttributes(s, attrs);
+		s->setAttrs(attrs);
 	}
 
 	return s;
