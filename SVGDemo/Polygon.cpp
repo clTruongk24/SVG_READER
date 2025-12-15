@@ -2,6 +2,7 @@
 #include "Polygon.h"
 #include "Color.h"
 #include <sstream>
+#include <algorithm>
 
 void polygon::draw(Graphics& graphics) {
 	if (p.size() < 3) return;
@@ -31,18 +32,15 @@ void polygon::draw(Graphics& graphics) {
 }
 
 void polygon::setPoints(const string& pointStr) {
-	stringstream ss(pointStr);
-	string token;
 
-	while (ss >> token) {
-		stringstream pair(token);
-		string xStr, yStr;
+	string temp = pointStr;
+	replace(temp.begin(), temp.end(), ',', ' ');
 
-		if (getline(pair, xStr, ',') && getline(pair, yStr)) {
-			INT x = static_cast<INT>(stof(xStr));
-			INT y = static_cast<INT>(stof(yStr));
-			Point temp(x, y);
-			p.push_back(temp);
-		}
+	istringstream iss(temp);
+	float x, y;
+	while (iss >> x >> y) {
+		p.push_back(Point(static_cast<INT>(x), static_cast<INT>(y)));
 	}
+
+	
 }

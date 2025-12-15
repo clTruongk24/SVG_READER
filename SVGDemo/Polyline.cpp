@@ -2,6 +2,7 @@
 #include "Polyline.h"
 #include "Color.h"
 #include <sstream>
+#include <algorithm>
 
 
 void polyline::draw(Graphics& graphics) {
@@ -33,18 +34,13 @@ void polyline::draw(Graphics& graphics) {
 }
 
 void polyline::setPoints(const string& pointStr) {
-	stringstream ss(pointStr);
-	string token;
+	string temp = pointStr;
+	replace(temp.begin(), temp.end(), ',', ' ');
 
-	while (ss >> token) {
-		stringstream pair(token);
-		string xStr, yStr;
-
-		if (getline(pair, xStr, ',') && getline(pair, yStr)) {
-			INT x = static_cast<INT>(stof(xStr));
-			INT y = static_cast<INT>(stof(yStr));
-			Point temp(x, y);
-			p.push_back(temp);
-		}
+	istringstream iss(temp);
+	float x, y;
+	while (iss >> x >> y) {
+		p.push_back(Point(static_cast<INT>(x), static_cast<INT>(y)));
 	}
+
 }
