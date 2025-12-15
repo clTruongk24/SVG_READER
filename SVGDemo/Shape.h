@@ -22,6 +22,8 @@ protected:
     float fill_opacity;
     float stroke_width;
     Transform* transform;
+
+    map<string, string> attrs;
 public:
     shape();
     virtual ~shape();
@@ -37,12 +39,16 @@ public:
     void setTransform(Transform*);
 	void setTransform(const string&);
 
+    void setAttrs(const map<string, string>&);
+
     string getID() const;
 	Color getStrokeColor() const;
 	Color getFillColor() const;
 	float getStrokeOpacity() const;
 	float getFillOpacity() const;
 	float getStrokeWidth() const;
+
+	map<string, string> getAttrs() const;
 
 };
 

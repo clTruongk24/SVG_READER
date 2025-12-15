@@ -29,7 +29,8 @@ void shape::setStrokeColor(const string& strokeStr) {
 }
 void shape::setFillColor(const string& fillStr) {
 	if (fillStr == "none") {
-		fill_color = Color(0, 0, 0, 0); // Transparent
+		setFillColor("white");
+		setFillOpacity("0");
 		return;
 	}
 	fill_color = parseColor(fillStr);
@@ -54,6 +55,10 @@ void shape::setTransform(const string& transformStr) {
 	this->transform = Transform::parse(transformStr);
 }
 
+void shape::setAttrs(const map<string, string>& attrs) {
+	this->attrs = attrs;
+}
+
 string shape::getID() const {
 	return id;
 }
@@ -76,4 +81,8 @@ float shape::getFillOpacity() const {
 
 float shape::getStrokeWidth() const {
 	return stroke_width;
+}
+
+map<string, string> shape::getAttrs() const {
+	return attrs;
 }

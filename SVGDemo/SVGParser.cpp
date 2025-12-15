@@ -56,6 +56,10 @@ vector<shape*> SVGParser::ParseFile(const string& filePath)
 
         if (s)
         {
+            if (group* g = dynamic_cast<group*>(s))
+            {
+                g->applyAttribute();
+			}
             Shapes.push_back(s);
         }
 
@@ -79,7 +83,16 @@ shape* SVGParser::ParseNode(xml_node<>* node) {
 
     if (tagName == "g") {
         group* g = new group();
-        g->setGroupAttributes(attributes);
+
+		g->setAttrs(attributes);
+
+        if (attributes.count("transform")) {
+            g->setTransform(attributes.at("transform"));
+        }
+
+        if (attributes.count("id")) {
+            g->setID(attributes.at("id"));
+		}
 
         for (xml_node<>* childNode = node->first_node(); childNode; childNode = childNode->next_sibling())
         {
@@ -89,6 +102,8 @@ shape* SVGParser::ParseNode(xml_node<>* node) {
                 g->addChild(childShape);
             }
         }
+		g->applyAttribute();
+        
         return g;
     }
 
