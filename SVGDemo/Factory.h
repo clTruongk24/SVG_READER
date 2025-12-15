@@ -7,9 +7,10 @@
 
 class factory {
 private:
-	static void ApplyCommonAttributes(shape*, const map<string, string>&);
 public:
 	static shape* createShape(const string&, const map<string, string>&);
+	static void ApplyCommonAttributes(shape*, const map<string, string>&);
+
 };
 
 #endif // !FACTORY_H

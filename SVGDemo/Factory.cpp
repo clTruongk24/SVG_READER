@@ -61,13 +61,21 @@ shape* factory::createShape(const string& tag, const map<string, string>& attrs)
 		if (attrs.count("x")) temp->setX(stof(attrs.at("x")));
 		if (attrs.count("y")) temp->setY(stof(attrs.at("y")));
 		if (attrs.count("font-size")) temp->setFontSize(stof(attrs.at("font-size")));
-		if (attrs.count("font-family")) temp->setFontFamily(attrs.at("font-family"));
+		if (attrs.count("font-family")) {
+			string family = attrs.at("font-family");
+			size_t commaPos = family.find(',');
+			if (commaPos != string::npos) {
+				family = family.substr(0, commaPos);
+			}
+			temp->setFontFamily(family);
+		}
 		if (attrs.count("text-anchor")) temp->setTextAnchor(attrs.at("text-anchor"));
 		if (attrs.count("font-style") && attrs.at("font-style") == "italic") {
 			temp->setItalic(true);
 		}
 		if (attrs.count("dx")) temp->setDX(stof(attrs.at("dx")));
 		if (attrs.count("dy")) temp->setDY(stof(attrs.at("dy")));
+		//temp->setStrokeWidth("1.0f");
 		s = temp;
 	}
 	/*else if (tag == "g") {
@@ -103,6 +111,12 @@ void factory::ApplyCommonAttributes(shape* s, const map<string, string>& attrs) 
 	}
 
 	if (attrs.count("fill")) {
+		string fill = attrs.at("fill");
+		if (fill == "none") {
+			s->setFillColor("white");
+			s->setFillOpacity("0");
+		}
+		else
 		s->setFillColor(attrs.at("fill"));
 	}
 
