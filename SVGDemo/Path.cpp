@@ -24,6 +24,10 @@ void path::setD(const string& d) {
 void path::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
+    if(transform) {
+        transform->Apply(graphics);
+    }
+
     Pen pen(stroke_color, stroke_width);
 
     if (stroke_opacity < 1.0f) {
