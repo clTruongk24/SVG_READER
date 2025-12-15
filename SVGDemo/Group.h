@@ -10,7 +10,6 @@ class group : public shape {
 private:
 	std::vector<shape*> children;
 
-	std::map<string, string> groupAttributes;
 
 	void ApplyInheritAttribute(shape*);
 public:
@@ -19,11 +18,8 @@ public:
 
 	void draw(Graphics&) override;
 	void addChild(shape*);
+	void applyAttribute();
 
-	void setGroupAttributes(const std::map<std::string, std::string>&);
-
-
-	std::map<std::string, std::string> getGroupAttributes() const;
 };
 
 #endif // !GROUP_H

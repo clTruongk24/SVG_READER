@@ -19,13 +19,8 @@ void group::addChild(shape* child) {
         return;
     }
     children.push_back(child);
-    ApplyInheritAttribute(child);
 }
 
-void group::setGroupAttributes(const map<string, string>& attrs) {
-    groupAttributes = attrs;
-    factory::ApplyCommonAttributes(this, attrs);
-}
 
 void group::draw(Graphics& graphics) {
     GraphicsState state = graphics.Save();
@@ -42,57 +37,60 @@ void group::draw(Graphics& graphics) {
 }
 
 void group::ApplyInheritAttribute(shape* s) {
-    if (!s || groupAttributes.empty()) return;
+    if (!s || this->attrs.empty()) return;
 
-    if (groupAttributes.count("fill")) {
-        Color childFill = s->getFillColor();
-        float childFillOpacity = s->getFillOpacity();
+    
+	map<string, string> groupAttributes = this->attrs;
+	map<string, string> childAttrs = s->getAttrs();
 
-        if (childFillOpacity == 0.0f) {
-            s->setFillColor(groupAttributes.at("fill"));
-        }
+    if (!childAttrs.count("fill") && groupAttributes.count("fill")) {
+        s->setFillColor(groupAttributes.at("fill"));
+	}
+
+    if (!childAttrs.count("stroke") && groupAttributes.count("stroke")) {
+        s->setStrokeColor(groupAttributes.at("stroke"));
+
+        if (s->getStrokeWidth() == 0.0f) {
+            s->setStrokeWidth("1.0");
+		}
     }
 
-    if (groupAttributes.count("stroke")) {
-        float childStrokeWidth = s->getStrokeWidth();
+    if (!childAttrs.count("stroke-width") && groupAttributes.count("stroke-width")) {
+        s->setStrokeWidth(groupAttributes.at("stroke-width"));
+	}
 
-        if (childStrokeWidth == 0) {
-            s->setStrokeColor(groupAttributes.at("stroke"));
-
-            if (!groupAttributes.count("stroke-width")) {
-                s->setStrokeWidth("1");
-            }
-        }
+    if (!childAttrs.count("fill-opacity") && groupAttributes.count("fill-opacity")) {
+        s->setFillOpacity(groupAttributes.at("fill-opacity"));
     }
 
-    if (groupAttributes.count("stroke-width")) {
-        float childStrokeWidth = s->getStrokeWidth();
-
-        if (childStrokeWidth == 0) {
-            s->setStrokeWidth(groupAttributes.at("stroke-width"));
-        }
-    }
-
-    if (groupAttributes.count("fill-opacity")) {
-        if (s->getFillOpacity() == 1.0f) {
-            s->setFillOpacity(groupAttributes.at("fill-opacity"));
-        }
-    }
-
-    if (groupAttributes.count("stroke-opacity")) {
-        if (s->getStrokeOpacity() == 1.0f) {
-            s->setStrokeOpacity(groupAttributes.at("stroke-opacity"));
-        }
-    }
+    if (!childAttrs.count("stroke-opacity") && groupAttributes.count("stroke-opacity")) {
+        s->setStrokeOpacity(groupAttributes.at("stroke-opacity"));
+	}
 
     if (groupAttributes.count("opacity")) {
-        if (s->getFillOpacity() == 1.0f) {
-            s->setFillOpacity(groupAttributes.at("opacity"));
+        float groupOpacity = stof(groupAttributes.at("opacity"));
+
+        if (!childAttrs.count("fill-opacity") && !childAttrs.count("opacity")) {
+            float currentFillOpacity = s->getFillOpacity();
+            s->setFillOpacity(to_string(currentFillOpacity * groupOpacity));
         }
 
-        if (s->getStrokeOpacity() == 1.0f) {
-            s->setStrokeOpacity(groupAttributes.at("opacity"));
+        if (!childAttrs.count("stroke-opacity") && !childAttrs.count("opacity")) {
+            float currentStrokeOpacity = s->getStrokeOpacity();
+            s->setStrokeOpacity(to_string(currentStrokeOpacity * groupOpacity));
         }
+    }
+
+    if (!childAttrs.count("fill-opacity") && !childAttrs.count("opacity") && groupAttributes.count("fill-opacity")) {
+        float groupFillOpacity = stof(groupAttributes.at("fill-opacity"));
+        float currentFillOpacity = s->getFillOpacity();
+        s->setFillOpacity(to_string(currentFillOpacity * groupFillOpacity));
+    }
+
+    if (!childAttrs.count("stroke-opacity") && !childAttrs.count("opacity") && groupAttributes.count("stroke-opacity")) {
+        float groupStrokeOpacity = stof(groupAttributes.at("stroke-opacity"));
+        float currentStrokeOpacity = s->getStrokeOpacity();
+        s->setStrokeOpacity(to_string(currentStrokeOpacity * groupStrokeOpacity));
     }
 
     group* childGroup = dynamic_cast<group*>(s);
@@ -102,22 +100,26 @@ void group::ApplyInheritAttribute(shape* s) {
             "fill-opacity", "stroke-opacity", "opacity"
         };
 
-        map<string, string> childAttrs = childGroup->getGroupAttributes();
+        map<string, string> childGroupAttrs = childGroup->getAttrs();
         bool needUpdate = false;
 
         for (const auto& key : inheritable) {
-            if (groupAttributes.count(key) && !childAttrs.count(key)) {
-                childAttrs[key] = groupAttributes.at(key);
+            if (groupAttributes.count(key) && !childGroupAttrs.count(key)) {
+                childGroupAttrs[key] = groupAttributes.at(key);
                 needUpdate = true;
             }
         }
 
         if (needUpdate) {
-            childGroup->setGroupAttributes(childAttrs);
+            childGroup->setAttrs(childGroupAttrs);
         }
+
+        childGroup->applyAttribute();
     }
 }
 
-map<string, string> group::getGroupAttributes() const {
-    return groupAttributes;
+void group::applyAttribute() {
+    for (shape* child : children) {
+        ApplyInheritAttribute(child);
+    }
 }
