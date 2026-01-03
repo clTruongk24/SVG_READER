@@ -4,6 +4,8 @@
 
 Renderer::Renderer(Graphics& g) : graphics(g) {}
 
+
+
 void Renderer::Draw(const std::vector<shape*>& shapes)
 {
     for (auto shape : shapes) {
