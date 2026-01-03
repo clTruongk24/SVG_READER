@@ -23,7 +23,7 @@ GradientStop::GradientStop(float off, const Gdiplus::Color& col, float op)
 
 // Set stop position (0..1)
 void GradientStop::setOffset(float off) {
-	offset = off;
+	offset = max(0.0f, min(1.0f, off));
 }
 
 // Get stop position
