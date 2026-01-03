@@ -71,10 +71,15 @@ void SVGReader::Render() {
 }
 
 void SVGReader::Render(Graphics& graphics) {
+    if (m_renderer) {
+        delete m_renderer;
+		m_renderer = nullptr;
+	}
+    m_renderer = new Renderer(graphics);
     if (!m_renderer) {
-        m_renderer = new Renderer(graphics);
-        m_renderer->Draw(m_shapes);
+        return;
     }
+	m_renderer->Draw(m_shapes);
 }
 
 
@@ -82,3 +87,8 @@ void SVGReader::Render(Graphics& graphics) {
 std::vector<shape*> SVGReader::GetShapes() const {
     return m_shapes;
 }
+
+const viewBox& SVGReader::getViewBox() const {
+    return m_parser.getViewBox();
+}
+
