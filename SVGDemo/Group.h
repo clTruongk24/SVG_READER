@@ -16,6 +16,8 @@ public:
 	group();
 	virtual ~group();
 
+	RectF getBounds() const override;
+
 	void draw(Graphics&) override;
 	void addChild(shape*);
 	void applyAttribute();
