@@ -27,7 +27,7 @@ Color ColorWithOpacity(const Color& fill_color, float fill_opacity) {
     BYTE r = fill_color.GetR();
     BYTE g = fill_color.GetG();
     BYTE b = fill_color.GetB();
-    BYTE opacity = static_cast<BYTE>(fill_opacity * 255);
+    BYTE opacity = static_cast<BYTE>(max(0.0f, min(1.0f, fill_opacity)) * 255);
     return Color(opacity, r, g, b);
 }
 
@@ -45,27 +45,39 @@ Color parseRGBColor(const string& str) {
     return Color(static_cast<BYTE>(r), static_cast<BYTE>(g), static_cast<BYTE>(b));
 }
 
-Color parseHexColor(const string& str) {
-    string hex = str.substr(1); // Remove '#'
+Color parseHexColor(const string& input) {
+    if (input.empty() || input[0] != '#')
+        return Color(0, 0, 0);
+
+    string hex = input.substr(1);
     unsigned int rgb = 0;
-    if (hex.length() == 3) {
-        // Short form (#RGB)
-        rgb = (stoi(hex.substr(0, 1), nullptr, 16) << 20) |
-              (stoi(hex.substr(0, 1), nullptr, 16) << 16) |
-              (stoi(hex.substr(1, 1), nullptr, 16) << 12) |
-              (stoi(hex.substr(1, 1), nullptr, 16) << 8) |
-              (stoi(hex.substr(2, 1), nullptr, 16) << 4) |
-              (stoi(hex.substr(2, 1), nullptr, 16));
+
+    try {
+        if (hex.size() == 3) {
+            // Short form: #RGB -> #RRGGBB
+            rgb = (std::stoi(hex.substr(0, 1), nullptr, 16) * 17 << 16) |
+                (std::stoi(hex.substr(1, 1), nullptr, 16) * 17 << 8) |
+                (std::stoi(hex.substr(2, 1), nullptr, 16) * 17);
+        }
+        else if (hex.size() == 6) {
+            // Full form: #RRGGBB
+            rgb = std::stoul(hex, nullptr, 16);
+        }
+        else {
+            return Color(0, 0, 0);
+        }
     }
-    else if (hex.length() == 6) {
-        // Full form (#RRGGBB)
-        rgb = stoi(hex, nullptr, 16);
+    catch (const std::exception&) {
+        return Color(0, 0, 0);
     }
+
     BYTE r = (rgb >> 16) & 0xFF;
     BYTE g = (rgb >> 8) & 0xFF;
     BYTE b = rgb & 0xFF;
-    return Color(r, g, b);
+
+    return Color(r, g, b);  
 }
+
 
 Color parseNamedColor(const string& str) {
     ifstream in("rgb.txt");
@@ -86,6 +98,7 @@ Color parseNamedColor(const string& str) {
             int r, g, b;
 			ss >> r >> g >> b;
             ss.ignore(1);
+            in.close();
             return Color(r, g, b);
         }
 	}
