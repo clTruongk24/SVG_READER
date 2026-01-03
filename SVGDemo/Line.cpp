@@ -9,14 +9,17 @@ line::line() {
 void line::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
-	if (transform) {
+	if (transform)
+	{
 		transform->Apply(graphics);
 	}
 
-	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
+	RectF bounds = getBounds();
+	Pen* pen = createStrokeGradientBrush(bounds);
 
-	graphics.DrawLine(&pen, x1, y1, x2, y2);
+	graphics.DrawLine(pen, x1, y1, x2, y2);
 
+	delete pen;
 	graphics.Restore(state);
 }
 
@@ -31,4 +34,12 @@ void line::setX2(float x2) {
 }
 void line::setY2(float y2) {
 	this->y2 = y2;
+}
+
+RectF line::getBounds() const {
+	float left = min(x1, x2);
+	float top = min(y1, y2);
+	float right = max(x1, x2);
+	float bottom = max(y1, y2);
+	return RectF(left, top, right - left, bottom - top);
 }

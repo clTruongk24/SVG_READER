@@ -13,6 +13,8 @@ public:
 	rectangle();
 	void draw(Graphics&) override;
 
+	RectF getBounds() const override;
+
 	void setX(float);
 	void setY(float);
 	void setWidth(float);

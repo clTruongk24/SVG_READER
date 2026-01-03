@@ -9,18 +9,25 @@ rectangle::rectangle() {
 void rectangle::draw(Graphics& graphics) {
 	GraphicsState state = graphics.Save();
 
-	if (transform) {
+	if (transform)
+	{
 		transform->Apply(graphics);
 	}
 
-	SolidBrush brush(ColorWithOpacity(fill_color, fill_opacity));
-	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
+	//SolidBrush* brush = createFillBrush();
+	//graphics.FillRectangle(brush, x, y, width, height);
 
-	graphics.FillRectangle(&brush, x, y, width, height);
+	Brush* brush = createFillGradientBrush(getBounds());
+	graphics.FillRectangle(brush, x, y, width, height);
+
 	if (stroke_width != 0) {
-		graphics.DrawRectangle(&pen, x, y, width, height);
+		Pen* pen = createStrokeGradientBrush(getBounds());
+		//graphics.DrawRectangle(pen, x, y, width, height);
+		graphics.DrawRectangle(pen, x, y, width, height);
+		delete pen;
 	}
 
+	delete brush;
 	graphics.Restore(state);
 }
 
@@ -38,4 +45,8 @@ void rectangle::setWidth(float width) {
 
 void rectangle::setHeight(float height) {
 	this->height = height;
+}
+
+RectF rectangle::getBounds() const {
+	return RectF(x, y, width, height);
 }

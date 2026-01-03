@@ -9,6 +9,9 @@ private:
 	vector<Point> p;
 public:
 	void draw(Graphics&) override;
+	
+	RectF getBounds() const override;
+
 	void setPoints(const string&);
 };
 #endif // !POLYLINE_H

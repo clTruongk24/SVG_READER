@@ -13,6 +13,8 @@ public:
 	ellipse();
 	void draw(Graphics&) override;
 
+	RectF getBounds() const override;
+
 	void setCX(float);
 	void setCY(float);
 	void setRX(float);

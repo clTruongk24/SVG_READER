@@ -13,6 +13,8 @@ public:
 	//circle(const map<string, string>&);
 	void draw(Graphics&) override;
 
+	RectF getBounds() const override;
+
 	void setCX(float);
 	void setCY(float);
 	void setRadius(float);

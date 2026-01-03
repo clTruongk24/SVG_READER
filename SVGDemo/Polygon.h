@@ -10,6 +10,8 @@ private:
 public:
 	void draw(Graphics&) override;
 
+	RectF getBounds() const override;
+
 	void setPoints(const string&);
 };
 #endif // !POLYGON_H

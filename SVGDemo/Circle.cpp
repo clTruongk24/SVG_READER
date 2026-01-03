@@ -1,38 +1,58 @@
 #include "stdafx.h"
 #include "Circle.h"
 #include "Color.h"
+#include "Defs.h"
+#include "Gradient.h"
 
-
-circle::circle() {
+circle::circle()
+{
 	cx = cy = r = 0;
 }
 
-void circle::draw(Graphics& graphics) {
+void circle::draw(Graphics &graphics)
+{
 	GraphicsState state = graphics.Save();
 
-	if (transform) {
+	if (transform)
+	{
 		transform->Apply(graphics);
 	}
 
-	SolidBrush brush(ColorWithOpacity(fill_color, fill_opacity));
-	Pen pen(ColorWithOpacity(stroke_color, stroke_opacity), stroke_width);
+	RectF bounds = getBounds();
 
-	graphics.FillEllipse(&brush, cx - r, cy - r, 2 * r, 2 * r);
-	if (stroke_width != 0) {
-		graphics.DrawEllipse(&pen, cx - r, cy - r, 2 * r, 2 * r);
+	Brush *brush = createFillGradientBrush(bounds);
+	graphics.FillEllipse(brush, bounds.X, bounds.Y, bounds.Width, bounds.Height);
+
+	// graphics.FillEllipse(brush, cx - r, cy - r, 2 * r, 2 * r);
+
+	if (stroke_width != 0)
+	{
+		Pen *pen = createStrokeGradientBrush(bounds);
+		graphics.DrawEllipse(pen, bounds.X, bounds.Y, bounds.Width, bounds.Height);
+		// graphics.DrawEllipse(pen, cx - r, cy - r, 2 * r, 2 * r);
+		delete pen;
 	}
 
+	delete brush;
 	graphics.Restore(state);
 }
 
-void circle::setCX(float cx) {
+void circle::setCX(float cx)
+{
 	this->cx = cx;
 }
 
-void circle::setCY(float cy) {
+void circle::setCY(float cy)
+{
 	this->cy = cy;
 }
 
-void circle::setRadius(float r) {
+void circle::setRadius(float r)
+{
 	this->r = r;
+}
+
+RectF circle::getBounds() const
+{
+	return RectF(cx - r, cy - r, 2 * r, 2 * r);
 }

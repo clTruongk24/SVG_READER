@@ -13,6 +13,8 @@ public:
 	line();
 	void draw(Graphics&) override;
 
+	RectF getBounds() const override;
+
 	void setX1(float);
 	void setY1(float);
 	void setX2(float);
