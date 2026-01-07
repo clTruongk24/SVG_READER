@@ -91,10 +91,6 @@ private:
     bool hasFocal;
 
     Gdiplus::Bitmap* cachedBitmap;
-    std::string cacheKey;
-
-	std::string generateCacheKey(const Gdiplus::RectF&, float, float, float, float, float) const;
-	Gdiplus::Brush* createApproximateRadialGradient(const Gdiplus::RectF&, float, float, float, float, float);
 
 	Gdiplus::Color getColorAtOffset(float) const;
 
@@ -120,8 +116,6 @@ public:
 
     void setHasFocal(bool);
     bool getHasFocal() const;
-
-    void clearCache();
 
     virtual Gdiplus::Brush* createBrush(const Gdiplus::RectF&) override;
 };
