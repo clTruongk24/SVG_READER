@@ -3,121 +3,103 @@
 
 #include <vector>
 #include <string>
-#include <gdiplus.h>
+#include <map>
+#include <algorithm>
 #include "Transform.h"
 
-class GradientStop
-{
-private:
-	float offset;
-	Gdiplus::Color color;
-	float opacity;
+class GradientStop {
 public:
-	GradientStop();
-	GradientStop(float, const Gdiplus::Color&, float);
+    GradientStop();
+    GradientStop(float off, const Gdiplus::Color& col, float op);
 
-	void setOffset(float);
-	float getOffset() const;
+    void setOffset(float off);
+    float getOffset() const;
+    void setColor(const Gdiplus::Color& col);
+    Gdiplus::Color getColor() const;
+    void setOpacity(float op);
+    float getOpacity() const;
 
-	void setColor(const Gdiplus::Color&);
-	Gdiplus::Color getColor() const;
-
-	void setOpacity(float);
-	float getOpacity() const;
+private:
+    float offset;
+    Gdiplus::Color color;
+    float opacity;
 };
 
 class GradientBase {
-protected:
-	std::string id;
-	std::vector<GradientStop> stops;
-	std::string spreadMethod; // pad, reflect, repeat
-	std::string gradientUnits; // userSpaceOnUse, objectBoundingBox
-	Transform* transform;
-
 public:
-	GradientBase();
-	virtual ~GradientBase();
-	
-	void setId(const std::string&);
-	std::string getId() const;
+    GradientBase();
+    virtual ~GradientBase();
 
-	void addStop(const GradientStop&);
-	void addStop(float, const Gdiplus::Color&, float);
+    void setId(const std::string& id);
+    std::string getId() const;
 
-	void setSpreadMethod(const std::string&);
-	std::string getSpreadMethod() const;
+    void addStop(const GradientStop& stop);
+    void addStop(float offset, const Gdiplus::Color& color, float opacity);
+    void setStops(const std::vector<GradientStop>& stopList);
+    std::vector<GradientStop> getStops() const;
 
-	void setGradientUnits(const std::string&);
-	std::string getGradientUnits() const;
+    void setSpreadMethod(const std::string& method);
+    std::string getSpreadMethod() const;
 
-	void setTransform(const Transform&);
-	Transform* getTransform() const;
+    void setGradientUnits(const std::string& units);
+    std::string getGradientUnits() const;
 
-	void setStops(const std::vector<GradientStop>&);
-	std::vector<GradientStop> getStops() const;
+    void setTransform(const Transform& t);
+    Transform* getTransform() const;
 
-	void handleHref(const std::string&);
+    virtual void handleHref(const std::string& href);
+    virtual Gdiplus::Brush* createBrush(const Gdiplus::RectF& bounds) = 0;
 
-	virtual Gdiplus::Brush* createBrush(const Gdiplus::RectF& )  = 0;
+protected:
+    std::string id;
+    std::vector<GradientStop> stops;
+    std::string spreadMethod;
+    std::string gradientUnits;
+    Transform* transform;
+
+    // Inheritance flags
+    bool stops_set;
+    bool spread_set;
+    bool units_set;
+    bool transform_set;
 };
 
 class LinearGradient : public GradientBase {
-private:
-	float x1;
-	float y1;
-	float x2;
-	float y2;
 public:
-	LinearGradient();
-	
-	void setX1(float);
-	float getX1() const;
+    LinearGradient();
 
-	void setY1(float);
-	float getY1() const;
+    void setX1(float x);
+    void setY1(float y);
+    void setX2(float x);
+    void setY2(float y);
 
-	void setX2(float);
-	float getX2() const;
+    void handleHref(const std::string& href) override;
+    Gdiplus::Brush* createBrush(const Gdiplus::RectF& bounds) override;
 
-	void setY2(float);
-	float getY2() const;
-
-	virtual Gdiplus::Brush* createBrush(const Gdiplus::RectF&)  override;
+private:
+    float x1, y1, x2, y2;
+    bool x1_set, y1_set, x2_set, y2_set;
 };
 
 class RadialGradient : public GradientBase {
+public:
+    RadialGradient();
+    ~RadialGradient();
+
+    void setCX(float x);
+    void setCY(float y);
+    void setR(float radius);
+    void setFX(float x);
+    void setFY(float y);
+    void setHasFocal(bool has);
+
+    void handleHref(const std::string& href) override;
+    Gdiplus::Brush* createBrush(const Gdiplus::RectF& bounds) override;
+
 private:
     float cx, cy, r, fx, fy;
     bool hasFocal;
-
-    Gdiplus::Bitmap* cachedBitmap;
-
-	Gdiplus::Color getColorAtOffset(float) const;
-
-	void getTransformedCoordinates(float&, float&, float&, float&, float&, const Gdiplus::RectF&) const;
-public:
-    RadialGradient();
-    ~RadialGradient(); 
-
-    void setCX(float);
-    float getCX() const;
-
-    void setCY(float);
-    float getCY() const;
-
-    void setR(float);
-    float getR() const;
-
-    void setFX(float);
-    float getFX() const;
-
-    void setFY(float);
-    float getFY() const;
-
-    void setHasFocal(bool);
-    bool getHasFocal() const;
-
-    virtual Gdiplus::Brush* createBrush(const Gdiplus::RectF&) override;
+    bool cx_set, cy_set, r_set, fx_set, fy_set, hasFocal_set;
 };
 
-#endif // !GRADIENT_H
+#endif

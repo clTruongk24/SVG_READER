@@ -1,607 +1,301 @@
 #include "stdafx.h"
 #include "Gradient.h"
 #include <algorithm>
-#include <fstream>
-#include <memory>
+#include <cmath>
 #include "Defs.h"
 
 using namespace std;
 using namespace Gdiplus;
 
 // --------------------------------------------------------------
-// Class: GradientStop
-// Purpose: Represents a single color stop inside a gradient.
-//  - offset: position along the gradient [0..1]
-//  - color: GDI+ color value for the stop
-//  - opacity: alpha in range [0..1]
+// GradientStop
 // --------------------------------------------------------------
 GradientStop::GradientStop() : offset(0.0f), color(Color::Black), opacity(1.0f) {}
-
 GradientStop::GradientStop(float off, const Gdiplus::Color& col, float op)
-	: offset(off), color(col), opacity(op) {
-}
+    : offset(off), color(col), opacity(op) {}
 
-// Set stop position (0..1)
-void GradientStop::setOffset(float off) {
-	offset = off;
-}
+void GradientStop::setOffset(float off) { offset = off; }
+float GradientStop::getOffset() const { return offset; }
+void GradientStop::setColor(const Gdiplus::Color& col) { color = col; }
+Gdiplus::Color GradientStop::getColor() const { return color; }
+void GradientStop::setOpacity(float op) { opacity = op; }
+float GradientStop::getOpacity() const { return opacity; }
 
-// Get stop position
-float GradientStop::getOffset() const {
-	return offset;
-}
-
-// Set stop color
-void GradientStop::setColor(const Gdiplus::Color& col) {
-	color = col;
-}
-
-// Get stop color
-Gdiplus::Color GradientStop::getColor() const {
-	return color;
-}
-
-// Set stop opacity (0..1)
-void GradientStop::setOpacity(float op) {
-	opacity = op;
-}
-
-// Get stop opacity
-float GradientStop::getOpacity() const {
-	return opacity;
-}
-
-
- // --------------------------------------------------------------
- // Class: GradientBase
- // Purpose: Base for gradient types (linear, radial).
- //  - Manages id, list of stops, spreadMethod (pad/reflect/repeat),
- //    gradientUnits (objectBoundingBox/userSpaceOnUse), and optional transform.
- //  - Supports inheriting properties via xlink:href.
- // --------------------------------------------------------------
+// --------------------------------------------------------------
+// GradientBase
+// --------------------------------------------------------------
 GradientBase::GradientBase()
-	: id(""), spreadMethod("pad"), gradientUnits("objectBoundingBox"), transform(nullptr) {
-}
+    : id(""), spreadMethod("pad"), gradientUnits("objectBoundingBox"), transform(nullptr),
+      stops_set(false), spread_set(false), units_set(false), transform_set(false) {}
 
 GradientBase::~GradientBase() {
-	if (transform) {
-		delete transform;
-	}
-	stops.clear();
+    if (transform) delete transform;
 }
 
-// Set gradient id
-void GradientBase::setId(const string& id) {
-	this->id = id;
-}
+void GradientBase::setId(const string& id) { this->id = id; }
+string GradientBase::getId() const { return id; }
 
-// Get gradient id
-string GradientBase::getId() const {
-	return id;
-}
-
-// Add a stop and keep stops sorted by offset
 void GradientBase::addStop(const GradientStop& stop) {
-	stops.push_back(stop);
-
-	sort(stops.begin(), stops.end(), [](const GradientStop& a, const GradientStop& b) {
-			return a.getOffset() < b.getOffset();
-		});
+    stops.push_back(stop);
+    sort(stops.begin(), stops.end(), [](const GradientStop& a, const GradientStop& b) {
+        return a.getOffset() < b.getOffset();
+    });
+    stops_set = true;
 }
 
-// Convenience to create and add a stop
 void GradientBase::addStop(float offset, const Gdiplus::Color& color, float opacity) {
-	GradientStop stop(offset, color, opacity);
-	addStop(stop);
+    addStop(GradientStop(offset, color, opacity));
 }
 
-// Set spread method: pad/reflect/repeat
-void GradientBase::setSpreadMethod(const string& method) {
-	this->spreadMethod = method;
-}
-
-// Get spread method
-string GradientBase::getSpreadMethod() const {
-	return spreadMethod;
-}
-
-// Get gradientUnits
-string GradientBase::getGradientUnits() const {
-	return gradientUnits;
-}
-
-// Set gradientUnits
-void GradientBase::setGradientUnits(const string& units) {
-	this->gradientUnits = units;
-}
-
-// Set gradientTransform by copying a Transform
-void GradientBase::setTransform(const Transform& t) {
-	if (transform) {
-		delete transform;
-	}
-	transform = new Transform(t);
-}
-
-// Get stops (copy)
-vector<GradientStop> GradientBase::getStops() const {
-	return stops;
-}
-
-// Set full stop list and sort by offset
 void GradientBase::setStops(const vector<GradientStop>& stopList) {
-	stops = stopList;
-	sort(stops.begin(), stops.end(), [](const GradientStop& a, const GradientStop& b) {
-			return a.getOffset() < b.getOffset();
-		});
+    stops = stopList;
+    sort(stops.begin(), stops.end(), [](const GradientStop& a, const GradientStop& b) {
+        return a.getOffset() < b.getOffset();
+    });
+    stops_set = true;
 }
 
-// Inherit stops/transform/method/units from referenced gradient via xlink:href/#id
+vector<GradientStop> GradientBase::getStops() const { return stops; }
+
+void GradientBase::setSpreadMethod(const string& method) { spreadMethod = method; spread_set = true; }
+string GradientBase::getSpreadMethod() const { return spreadMethod; }
+
+void GradientBase::setGradientUnits(const string& units) { gradientUnits = units; units_set = true; }
+string GradientBase::getGradientUnits() const { return gradientUnits; }
+
+void GradientBase::setTransform(const Transform& t) {
+    if (transform) delete transform;
+    transform = new Transform(t);
+    transform_set = true;
+}
+
+Transform* GradientBase::getTransform() const { return transform; }
+
 void GradientBase::handleHref(const string& href) {
-	if (href.empty() || href[0] != '#') {
-		return;
-	}
+    if (href.empty() || href[0] != '#') return;
+    string refId = href.substr(1);
+    GradientBase* ref = Defs::getInstance().getGradient(refId);
+    if (!ref) return;
 
-	string refId = href.substr(1);
-	GradientBase* refGradient = Defs::getInstance().getGradient(refId);
-
-	if (refGradient) {
-		if (stops.empty()) {
-			stops = refGradient->getStops();
-		}
-
-		if (transform == nullptr && refGradient->getTransform() != nullptr) {
-			transform = new Transform(*refGradient->getTransform());
-		}
-
-		if (spreadMethod == "pad" && refGradient->getSpreadMethod() != "pad") {
-			spreadMethod = refGradient->getSpreadMethod();
-		}
-
-		if (gradientUnits == "objectBoundingBox" && refGradient->getGradientUnits() != "objectBoundingBox") {
-			gradientUnits = refGradient->getGradientUnits();
-		}
-	}
-}
-
-// Get gradientTransform pointer (can be nullptr)
-Transform* GradientBase::getTransform() const {
-	return transform;
+    if (!stops_set && !ref->getStops().empty()) { stops = ref->getStops(); stops_set = true; }
+    if (!spread_set) spreadMethod = ref->getSpreadMethod();
+    if (!units_set) gradientUnits = ref->getGradientUnits();
+    if (!transform_set && ref->getTransform()) { transform = new Transform(*ref->getTransform()); transform_set = true; }
 }
 
 // --------------------------------------------------------------
-// Class: LinearGradient
-// Purpose: Implements a linear gradient from (x1,y1) to (x2,y2).
-//  - Coordinates are interpreted per gradientUnits (objectBoundingBox/userSpaceOnUse).
-//  - Uses SetInterpolationColors for multiple stops.
-//  - Applies gradientTransform if present.
+// LinearGradient
 // --------------------------------------------------------------
 LinearGradient::LinearGradient()
-	: x1(0.0f), y1(0.0f), x2(1.0f), y2(0.0f) {
+    : x1(0.0f), y1(0.0f), x2(1.0f), y2(0.0f),
+      x1_set(false), y1_set(false), x2_set(false), y2_set(false) {}
+
+void LinearGradient::setX1(float x) { x1 = x; x1_set = true; }
+void LinearGradient::setY1(float y) { y1 = y; y1_set = true; }
+void LinearGradient::setX2(float x) { x2 = x; x2_set = true; }
+void LinearGradient::setY2(float y) { y2 = y; y2_set = true; }
+
+void LinearGradient::handleHref(const string& href) {
+    GradientBase::handleHref(href);
+    if (href.empty() || href[0] != '#') return;
+    LinearGradient* ref = dynamic_cast<LinearGradient*>(Defs::getInstance().getGradient(href.substr(1)));
+    if (!ref) return;
+
+    if (!x1_set) { x1 = ref->x1; x1_set = ref->x1_set; }
+    if (!y1_set) { y1 = ref->y1; y1_set = ref->y1_set; }
+    if (!x2_set) { x2 = ref->x2; x2_set = ref->x2_set; }
+    if (!y2_set) { y2 = ref->y2; y2_set = ref->y2_set; }
 }
 
-void LinearGradient::setX1(float x) {
-	x1 = x;
-}
+Brush* LinearGradient::createBrush(const Gdiplus::RectF& bounds) {
+    if (stops.empty()) return new SolidBrush(Color::Black);
+    if (stops.size() == 1) {
+        Color c = stops[0].getColor();
+        return new SolidBrush(Color(static_cast<BYTE>(stops[0].getOpacity() * 255), c.GetR(), c.GetG(), c.GetB()));
+    }
 
-float LinearGradient::getX1() const {
-	return x1;
-}
+    // SVG Spec transformation order for objectBoundingBox:
+    // 1. Unit coordinates [0,1] are transformed by gradientTransform
+    // 2. Then mapped to objectBoundingBox
+    // P_user = M_bboxMapping * M_gradTransform * P_unit
+    Matrix totalMat;
+    if (transform && transform->getMatrix()) {
+        totalMat.Multiply(transform->getMatrix(), MatrixOrderAppend);
+    }
+    if (gradientUnits == "objectBoundingBox") {
+        Matrix bboxMat;
+        bboxMat.Scale(bounds.Width, bounds.Height, MatrixOrderAppend);
+        bboxMat.Translate(bounds.X, bounds.Y, MatrixOrderAppend);
+        totalMat.Multiply(&bboxMat, MatrixOrderAppend);
+    }
 
-void LinearGradient::setY1(float y) {
-	y1 = y;
-}
+    PointF p1_world(x1, y1), p2_world(x2, y2);
+    PointF pts[2] = {p1_world, p2_world};
+    totalMat.TransformPoints(pts, 2);
+    p1_world = pts[0]; p2_world = pts[1];
 
-float LinearGradient::getY1() const {
-	return y1;
-}
+    float dx = p2_world.X - p1_world.X;
+    float dy = p2_world.Y - p1_world.Y;
+    float dist = sqrt(dx * dx + dy * dy);
+    if (dist < 0.001f) {
+        Color c = stops.back().getColor();
+        return new SolidBrush(Color(static_cast<BYTE>(stops.back().getOpacity() * 255), c.GetR(), c.GetG(), c.GetB()));
+    }
 
-void LinearGradient::setX2(float x) {
-	x2 = x;
-}
+    // Expand to avoid tiling
+    float factor = 1000.0f;
+    PointF p1_huge(p1_world.X - dx * factor, p1_world.Y - dy * factor);
+    PointF p2_huge(p2_world.X + dx * factor, p2_world.Y + dy * factor);
 
-float LinearGradient::getX2() const {
-	return x2;
-}
+    LinearGradientBrush* brush = new LinearGradientBrush(p1_huge, p2_huge, Color::Black, Color::Black);
 
-void LinearGradient::setY2(float y) {
-	y2 = y;
-}
+    std::vector<Color> colors;
+    std::vector<REAL> positions;
+    float totalDist = dist * (2 * factor + 1);
+    float startOffset = (dist * factor) / totalDist;
+    float scale = dist / totalDist;
 
-float LinearGradient::getY2() const {
-	return y2;
-}
+    colors.push_back(Color(static_cast<BYTE>(stops[0].getOpacity() * 255), 
+                           stops[0].getColor().GetR(), stops[0].getColor().GetG(), stops[0].getColor().GetB()));
+    positions.push_back(0.0f);
+    for (const auto& s : stops) {
+        Color c = s.getColor();
+        colors.push_back(Color(static_cast<BYTE>(s.getOpacity() * 255), c.GetR(), c.GetG(), c.GetB()));
+        positions.push_back(startOffset + s.getOffset() * scale);
+    }
+    colors.push_back(colors.back());
+    positions.push_back(1.0f);
 
-// createBrush (LinearGradient):
-//  - If two stops: use direct color1/color2 constructor.
-//  - If >2 stops: call SetInterpolationColors with arrays of colors/positions.
-//  - For objectBoundingBox, convert x1/y1/x2/y2 from percentage to pixel using bounds.
-//  - Multiply brush by gradientTransform if present.
-Brush* LinearGradient::createBrush(const Gdiplus::RectF& bounds)  {
-	if (stops.empty()) {
-		return new SolidBrush(Color::Black);
-	}
+    brush->SetInterpolationColors(colors.data(), positions.data(), (int)colors.size());
+    brush->SetWrapMode(WrapModeTile); 
 
-	if (stops.size() == 1) {
-		Color col = stops[0].getColor();
-		BYTE alpha = static_cast<BYTE>(stops[0].getOpacity() * 255);
-		return new SolidBrush(Color(alpha, col.GetR(), col.GetG(), col.GetB()));
-	}
-
-	float startX, startY, endX, endY;
-
-	// Convert coordinates per gradientUnits
-	if (gradientUnits == "objectBoundingBox") {
-		startX = bounds.X + x1 * bounds.Width;
-		startY = bounds.Y + y1 * bounds.Height;
-		endX = bounds.X + x2 * bounds.Width;
-		endY = bounds.Y + y2 * bounds.Height;
-	} else {
-		startX = x1;
-		startY = y1;
-		endX = x2;
-		endY = y2;
-	}
-
-	PointF startPoint(startX, startY);
-	PointF endPoint(endX, endY);
-
-	LinearGradientBrush* brush = nullptr;
-
-	if (stops.size() == 2) {
-		// Two stops: simple linear gradient
-		Color c1 = stops[0].getColor();
-		Color c2 = stops[1].getColor();
-		BYTE a1 = static_cast<BYTE>(stops[0].getOpacity() * 255);
-		BYTE a2 = static_cast<BYTE>(stops[1].getOpacity() * 255);
-
-		Color color1(a1, c1.GetR(), c1.GetG(), c1.GetB());
-		Color color2(a2, c2.GetR(), c2.GetG(), c2.GetB());
-
-		brush = new LinearGradientBrush(
-			startPoint,
-			endPoint,
-			color1,
-			color2
-		);
-	}
-	else {
-		// Multiple stops: interpolate colors along positions
-		int n = (int)stops.size();
-		Color* colors = new Color[n];
-		REAL* positions = new REAL[n];
-
-		for (int i = 0; i < n; ++i) {
-			Color c = stops[i].getColor();
-			BYTE a = static_cast<BYTE>(stops[i].getOpacity() * 255);
-			colors[i] = Color(a, c.GetR(), c.GetG(), c.GetB());
-			positions[i] = stops[i].getOffset();
-		}
-
-		brush = new LinearGradientBrush(
-			startPoint,
-			endPoint,
-			colors[0],
-			colors[n - 1]
-		);
-
-		brush->SetInterpolationColors(colors, positions, n);
-
-		delete[] colors;
-		delete[] positions;
-	}
-
-	// Apply gradientTransform if any
-	if (transform && transform->getMatrix()) {
-		brush->MultiplyTransform(transform->getMatrix());
-	}
-
-	return brush;
+    return brush;
 }
 
 // --------------------------------------------------------------
-// Class: RadialGradient
-// Purpose: Implements radial gradient with center (cx,cy), radius r,
-//  optional focal point (fx,fy). Supports gradientUnits/transform/spread.
-//  The per-pixel bitmap renderer approximates SVG radial behavior closely.
-//  A cached bitmap is owned to avoid re-render where possible.
+// RadialGradient
 // --------------------------------------------------------------
 RadialGradient::RadialGradient()
-    : cx(0.5f), cy(0.5f), r(0.5f), fx(0.5f), fy(0.5f),
-      hasFocal(false), cachedBitmap(nullptr) {
-}
+    : cx(0.5f), cy(0.5f), r(0.5f), fx(0.5f), fy(0.5f), hasFocal(false),
+      cx_set(false), cy_set(false), r_set(false), fx_set(false), fy_set(false), hasFocal_set(false) {}
 
-RadialGradient::~RadialGradient() {
-    // Free cached bitmap to avoid memory leaks
-    if (cachedBitmap) {
-        delete cachedBitmap;
-        cachedBitmap = nullptr;
+RadialGradient::~RadialGradient() {}
+
+void RadialGradient::setCX(float x) { cx = x; cx_set = true; if (!fx_set) fx = x; }
+void RadialGradient::setCY(float y) { cy = y; cy_set = true; if (!fy_set) fy = y; }
+void RadialGradient::setR(float radius) { r = radius; r_set = true; }
+void RadialGradient::setFX(float x) { fx = x; fx_set = true; hasFocal = true; }
+void RadialGradient::setFY(float y) { fy = y; fy_set = true; hasFocal = true; }
+void RadialGradient::setHasFocal(bool has) { hasFocal = has; hasFocal_set = true; }
+
+void RadialGradient::handleHref(const string& href) {
+    GradientBase::handleHref(href);
+    if (href.empty() || href[0] != '#') return;
+    string refId = href.substr(1);
+    RadialGradient* ref = dynamic_cast<RadialGradient*>(Defs::getInstance().getGradient(refId));
+    if (!ref) return;
+
+    if (!cx_set) { cx = ref->cx; cx_set = ref->cx_set; }
+    if (!cy_set) { cy = ref->cy; cy_set = ref->cy_set; }
+    if (!r_set) { r = ref->r; r_set = ref->r_set; }
+    if (!hasFocal_set) {
+        hasFocal = ref->hasFocal;
+        fx = ref->fx; fy = ref->fy;
+        hasFocal_set = ref->hasFocal_set;
+        fx_set = ref->fx_set; fy_set = ref->fy_set;
     }
 }
 
-// Setters/getters for radial parameters
-void RadialGradient::setCX(float x) {
-	cx = x;
-}
-
-float RadialGradient::getCX() const {
-	return cx;
-}
-
-void RadialGradient::setCY(float y) {
-	cy = y;
-}
-
-float RadialGradient::getCY() const {
-	return cy;
-}
-
-void RadialGradient::setR(float radius) {
-	r = radius;
-}
-
-float RadialGradient::getR() const {
-	return r;
-}
-
-void RadialGradient::setFX(float x) {
-	fx = x;
-}
-
-float RadialGradient::getFX() const {
-	return fx;
-}
-
-void RadialGradient::setFY(float y) {
-	fy = y;
-}
-
-float RadialGradient::getFY() const {
-	return fy;
-}
-
-// createBrush (RadialGradient):
-//  - Computes transformed center/focal/radius using getTransformedCoordinates.
-//  - Renders a bitmap per-pixel and returns a TextureBrush positioned to bounds.
-//  - Handles trivial cases with SolidBrush.
-Brush* RadialGradient::createBrush(const Gdiplus::RectF& bounds)  {
-    if (stops.empty()) {
-        return new SolidBrush(Color::Black);
-    }
+Brush* RadialGradient::createBrush(const Gdiplus::RectF& bounds) {
+    if (stops.empty()) return new SolidBrush(Color::Black);
     if (stops.size() == 1) {
-        Color col = stops[0].getColor();
-        BYTE alpha = static_cast<BYTE>(stops[0].getOpacity() * 255);
-        return new SolidBrush(Color(alpha, col.GetR(), col.GetG(), col.GetB()));
+        Color c = stops[0].getColor();
+        return new SolidBrush(Color(static_cast<BYTE>(stops[0].getOpacity() * 255), c.GetR(), c.GetG(), c.GetB()));
     }
 
-    float centerX, centerY, radius, focalX, focalY;
-    getTransformedCoordinates(centerX, centerY, radius, focalX, focalY, bounds);
-
-    if (radius <= 0.001f) {
-        Color col = stops.back().getColor();
-        BYTE a = static_cast<BYTE>(stops.back().getOpacity() * 255);
-        return new SolidBrush(Color(a, col.GetR(), col.GetG(), col.GetB()));
+    // Transformation order: P_user = M_bboxMapping * M_gradTransform * P_unit
+    Matrix totalMat;
+    if (transform && transform->getMatrix()) {
+        totalMat.Multiply(transform->getMatrix(), MatrixOrderAppend);
+    }
+    if (gradientUnits == "objectBoundingBox") {
+        Matrix bboxMat;
+        bboxMat.Scale(bounds.Width, bounds.Height, MatrixOrderAppend);
+        bboxMat.Translate(bounds.X, bounds.Y, MatrixOrderAppend);
+        totalMat.Multiply(&bboxMat, MatrixOrderAppend);
     }
 
-    int w = static_cast<int>(std::ceil(bounds.Width));
-    int h = static_cast<int>(std::ceil(bounds.Height));
-    if (w <= 0 || h <= 0) {
-        Color col = stops.back().getColor();
-        BYTE a = static_cast<BYTE>(stops.back().getOpacity() * 255);
-        return new SolidBrush(Color(a, col.GetR(), col.GetG(), col.GetB()));
+    // Dynamic Expansion Logic: ensure the gradient circle covers the entire shape
+    Matrix invMat;
+    invMat.Multiply(&totalMat);
+    if (invMat.Invert() != Ok) return new SolidBrush(Color::Black);
+
+    PointF corners[4] = {
+        PointF(bounds.X, bounds.Y), PointF(bounds.X + bounds.Width, bounds.Y),
+        PointF(bounds.X, bounds.Y + bounds.Height), PointF(bounds.X + bounds.Width, bounds.Y + bounds.Height)
+    };
+    invMat.TransformPoints(corners, 4);
+
+    float maxDist = r;
+    for (int i = 0; i < 4; ++i) {
+        float dx = corners[i].X - cx, dy = corners[i].Y - cy;
+        float d = sqrt(dx * dx + dy * dy);
+        if (d > maxDist) maxDist = d;
+    }
+    float R_eff = maxDist * 1.1f; // Use expanded radius
+
+    GraphicsPath path;
+    path.AddEllipse(cx - R_eff, cy - R_eff, R_eff * 2, R_eff * 2);
+    PathGradientBrush* pgb = new PathGradientBrush(&path);
+
+    // Focal point clamping (against original radius r to preserve gradient slope)
+    float effFX = hasFocal ? fx : cx;
+    float effFY = hasFocal ? fy : cy;
+    float fdx = effFX - cx, fdy = effFY - cy;
+    float fdist = sqrt(fdx * fdx + fdy * fdy);
+    if (fdist > r * 0.99f) {
+        float ratio = (r * 0.99f) / fdist;
+        effFX = cx + fdx * ratio;
+        effFY = cy + fdy * ratio;
+    }
+    pgb->SetCenterPoint(PointF(effFX, effFY));
+
+    std::vector<Color> colors;
+    std::vector<REAL> positions;
+    
+    // GDI+ PathGradientBrush: position 0 = BOUNDARY(R_eff), position 1 = CENTER
+    // SVG stops 0..1 map to center..boundary(r)
+    // Map SVG offset x to GDI+ pos = 1.0 - (x * r / R_eff)
+    for (int i = (int)stops.size() - 1; i >= 0; --i) {
+        Color c = stops[i].getColor();
+        colors.push_back(Color(static_cast<BYTE>(stops[i].getOpacity() * 255), c.GetR(), c.GetG(), c.GetB()));
+        positions.push_back(1.0f - (stops[i].getOffset() * r / R_eff));
+    }
+    
+    // Pad the outer region (from r to R_eff) with the last color (position 0)
+    if (positions[0] > 0.0f) {
+        colors.insert(colors.begin(), colors[0]);
+        positions.insert(positions.begin(), 0.0f);
+    }
+    // Ensure center is 1.0
+    if (positions.back() < 1.0f) {
+        colors.push_back(colors.back());
+        positions.push_back(1.0f);
     }
 
-    const int MAX_DIM = 4096;
-    if (w > MAX_DIM || h > MAX_DIM) {
-        float scale = min(static_cast<float>(MAX_DIM) / w, static_cast<float>(MAX_DIM) / h);
-        w = static_cast<int>(w * scale);
-        h = static_cast<int>(h * scale);
-    }
+    pgb->SetInterpolationColors(colors.data(), positions.data(), (int)colors.size());
+    pgb->SetCenterColor(colors.back());
+    
+    Color boundaryColor = colors[0];
+    int sCount = path.GetPointCount();
+    std::vector<Color> surroundColors(sCount, boundaryColor);
+    pgb->SetSurroundColors(surroundColors.data(), &sCount);
 
-    Bitmap* bmp = new Bitmap(w, h, PixelFormat32bppARGB);
-    Rect lockRect(0, 0, w, h);
-    BitmapData data;
+    pgb->SetTransform(&totalMat);
 
-    if (bmp->LockBits(&lockRect, ImageLockModeWrite, PixelFormat32bppARGB, &data) != Ok) {
-        delete bmp;
-        Color col = stops.back().getColor();
-        BYTE a = static_cast<BYTE>(stops.back().getOpacity() * 255);
-        return new SolidBrush(Color(a, col.GetR(), col.GetG(), col.GetB()));
-    }
+    if (spreadMethod == "reflect") pgb->SetWrapMode(WrapModeTileFlipXY);
+    else if (spreadMethod == "repeat") pgb->SetWrapMode(WrapModeTile);
+    else pgb->SetWrapMode(WrapModeClamp);
 
-    BYTE* pixels = reinterpret_cast<BYTE*>(data.Scan0);
-    const int stride = data.Stride;
-
-    const float localFocalX = focalX - bounds.X;
-    const float localFocalY = focalY - bounds.Y;
-    const float localCenterX = centerX - bounds.X;
-    const float localCenterY = centerY - bounds.Y;
-
-    // Per-pixel render: offset is distance(focal->pixel)/radius
-    for (int y = 0; y < h; ++y) {
-        BYTE* row = pixels + y * stride;
-        float py = bounds.Y + y;
-
-        for (int x = 0; x < w; ++x) {
-            float px = bounds.X + x; 
-
-            float dx = px - focalX;
-            float dy = py - focalY;
-            float dist = std::sqrt(dx * dx + dy * dy);
-
-            float offset = dist / radius;
-
-            Color c = getColorAtOffset(offset);
-
-            BYTE* p = row + x * 4;
-            p[0] = c.GetB();
-            p[1] = c.GetG();
-            p[2] = c.GetR();
-            p[3] = c.GetA();
-        }
-    }
-
-    bmp->UnlockBits(&data);
-
-    TextureBrush* textureBrush = new TextureBrush(bmp, WrapModeClamp);
-
-    textureBrush->TranslateTransform(bounds.X, bounds.Y);
-
-    if (spreadMethod == "reflect") {
-        textureBrush->SetWrapMode(WrapModeTileFlipXY);
-    } else if (spreadMethod == "repeat") {
-        textureBrush->SetWrapMode(WrapModeTile);
-    }
-
-    return textureBrush;
-}
-
-// Mark gradient as having a focal point
-void RadialGradient::setHasFocal(bool has) {
-	hasFocal = has;
-}
-
-// Query focal flag
-bool RadialGradient::getHasFocal() const {
-	return hasFocal;
-}
-
-// Compute color at a normalized offset using stops and spreadMethod
-Color RadialGradient::getColorAtOffset(float offset) const {
-	if (stops.empty()) return Color::Black;
-
-	if (stops.size() == 1) {
-		Color c = stops[0].getColor();
-		BYTE a = static_cast<BYTE>(stops[0].getOpacity() * 255);
-		return Color(a, c.GetR(), c.GetG(), c.GetB());
-	}
-
-	// Apply spreadMethod normalization
-	float originalOffset = offset;
-	if (spreadMethod == "pad") {
-		offset = max(0.0f, min(1.0f, offset));
-	}
-	else if (spreadMethod == "reflect") {
-		if (offset < 0) offset = -offset;
-		offset = fmod(offset, 2.0f);
-		if (offset > 1.0f) offset = 2.0f - offset;
-	}
-	else if (spreadMethod == "repeat") {
-		offset = fmod(offset, 1.0f);
-		if (offset < 0) offset += 1.0f;
-	}
-
-	// Edge cases
-	if (offset <= stops[0].getOffset()) {
-		Color c = stops[0].getColor();
-		BYTE a = static_cast<BYTE>(stops[0].getOpacity() * 255);
-		return Color(a, c.GetR(), c.GetG(), c.GetB());
-	}
-
-	if (offset >= stops[stops.size() - 1].getOffset()) {
-		Color c = stops[stops.size() - 1].getColor();
-		BYTE a = static_cast<BYTE>(stops[stops.size() - 1].getOpacity() * 255);
-		return Color(a, c.GetR(), c.GetG(), c.GetB());
-	}
-
-	// Interpolate between surrounding stops
-	for (size_t i = 0; i < stops.size() - 1; i++) {
-		if (offset >= stops[i].getOffset() && offset <= stops[i + 1].getOffset()) {
-			float t = (offset - stops[i].getOffset()) /
-				(stops[i + 1].getOffset() - stops[i].getOffset());
-
-			Color c1 = stops[i].getColor();
-			Color c2 = stops[i + 1].getColor();
-			float a1 = stops[i].getOpacity();
-			float a2 = stops[i + 1].getOpacity();
-
-			BYTE r = (BYTE)(c1.GetR() * (1 - t) + c2.GetR() * t);
-			BYTE g = (BYTE)(c1.GetG() * (1 - t) + c2.GetG() * t);
-			BYTE b = (BYTE)(c1.GetB() * (1 - t) + c2.GetB() * t);
-			BYTE a = (BYTE)((a1 * (1 - t) + a2 * t) * 255);
-
-			return Color(a, r, g, b);
-		}
-	}
-
-	return Color::Black;
-}
-
-// Compute world-space center/focal/radius based on gradientUnits and transform
-void RadialGradient::getTransformedCoordinates(float& outCX, float& outCY, float& outR,
-	float& outFX, float& outFY,
-	const RectF& bounds) const {
-
-	if (gradientUnits == "userSpaceOnUse" && transform && transform->getMatrix()) {
-		PointF center(cx, cy);
-		PointF points[] = { center };
-		transform->getMatrix()->TransformPoints(points, 1);
-		outCX = points[0].X;
-		outCY = points[0].Y;
-
-		if (hasFocal) {
-			PointF focal(fx, fy);
-			PointF focalPoints[] = { focal };
-			transform->getMatrix()->TransformPoints(focalPoints, 1);
-			outFX = focalPoints[0].X;
-			outFY = focalPoints[0].Y;
-		}
-		else {
-			outFX = outCX;
-			outFY = outCY;
-		}
-
-		PointF radiusVec(r, 0);
-		PointF radiusVecs[] = { radiusVec };
-		transform->getMatrix()->TransformVectors(radiusVecs, 1);
-		outR = sqrt(radiusVecs[0].X * radiusVecs[0].X +
-			radiusVecs[0].Y * radiusVecs[0].Y);
-	}
-	else if (gradientUnits == "objectBoundingBox") {
-		float mappedCX = bounds.X + cx * bounds.Width;
-		float mappedCY = bounds.Y + cy * bounds.Height;
-		// Map r relative to bbox size (approximate circle in bbox)
-		float mappedR = r * sqrt(bounds.Width * bounds.Width +
-			bounds.Height * bounds.Height) / sqrt(2.0f);
-		float mappedFX = hasFocal ? (bounds.X + fx * bounds.Width) : mappedCX;
-		float mappedFY = hasFocal ? (bounds.Y + fy * bounds.Height) : mappedCY;
-
-		if (transform && transform->getMatrix()) {
-			PointF center(mappedCX, mappedCY);
-			PointF points[] = { center };
-			transform->getMatrix()->TransformPoints(points, 1);
-			outCX = points[0].X;
-			outCY = points[0].Y;
-
-			PointF focal(mappedFX, mappedFY);
-			PointF focalPoints[] = { focal };
-			transform->getMatrix()->TransformPoints(focalPoints, 1);
-			outFX = focalPoints[0].X;
-			outFY = focalPoints[0].Y;
-
-			PointF radiusVec(mappedR, 0);
-			PointF radiusVecs[] = { radiusVec };
-			transform->getMatrix()->TransformVectors(radiusVecs, 1);
-			outR = sqrt(radiusVecs[0].X * radiusVecs[0].X +
-				radiusVecs[0].Y * radiusVecs[0].Y);
-		}
-		else {
-			outCX = mappedCX;
-			outCY = mappedCY;
-			outR = mappedR;
-			outFX = mappedFX;
-			outFY = mappedFY;
-		}
-	}
-	else {
-		outCX = cx;
-		outCY = cy;
-		outR = r;
-		outFX = hasFocal ? fx : cx;
-		outFY = hasFocal ? fy : cy;
-	}
-
-	if (outR < 0.1f) {
-		outR = 0.1f;
-	}
+    return pgb;
 }
